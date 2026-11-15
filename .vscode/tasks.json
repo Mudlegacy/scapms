@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: configure",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build",
+                "-G", "Ninja",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_PREFIX_PATH=C:/msys64/ucrt64",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build SCAPMS",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "build"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "CMake: configure",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}

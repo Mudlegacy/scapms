@@ -1,0 +1,85 @@
+<div class="report">
+
+<h1>Project Report</h1>
+<p class="sub">Smart Clinic Appointment &amp; Patient Management System (SCAPMS) &mdash; COS202 Programming II</p>
+
+<h2>1. Project description</h2>
+<p>SCAPMS is a desktop application for a university clinic, written in C++17 with the Qt 6 GUI toolkit and built with CMake (MSYS2 UCRT64, g++ 15.2). Clinic staff use it to register patients, schedule appointments, manage a waiting queue, search and sort records, undo administrative mistakes, view reports, and save or load all data from a file. The code is divided into four layers, each in its own namespace: <code>scapms::model</code> (the clinic's data classes), <code>scapms::controller</code> (rules and algorithms), <code>scapms::utils</code> (validation, files, IDs, exceptions) and <code>scapms::gui</code> (Qt windows). The first three layers contain no Qt code and are also driven by a console test program, which shows that the GUI is only one client of the same core.</p>
+
+<h2>2. System features</h2>
+<ul>
+<li>Register, edit and delete General, Emergency and Follow-Up patients; every field is validated.</li>
+<li>Schedule, cancel and complete appointments; double bookings, impossible dates and invalid times are rejected.</li>
+<li>Waiting queue: emergency patients are served first, everyone else first come, first served; &ldquo;Call next patient&rdquo;.</li>
+<li>Search by ID, name or category with a choice of technique; sort by name, ID or age with a choice of algorithm.</li>
+<li>Undo of the last administrative operation (delete patient, edit patient, cancel appointment) using a stack.</li>
+<li>Four reports (most frequently attended, pending appointments, category distribution, daily summary), exportable to a text file.</li>
+<li>Save and load to a text (CSV-style) file; a corrupt file is rejected and changes nothing.</li>
+<li>Dashboard with live statistics, appointment reminders and a waiting-time alert (all timer-driven); keyboard shortcuts, tooltips and file dialogs.</li>
+</ul>
+
+<h2>3. Class hierarchy</h2>
+<p><code>PatientRecord</code> is an <b>abstract class</b> holding the shared data (ID, name, age, contact) and three pure virtual functions: <code>getCategory()</code>, <code>getPriority()</code> and <code>getSummary()</code>. <code>GeneralPatient</code>, <code>EmergencyPatient</code> and <code>FollowUpPatient</code> derive from it and add their own data (complaint; severity and condition; previous diagnosis and last visit date). <code>Appointable</code> is an <b>interface</b> (pure virtual functions only) implemented by General and Follow-Up patients; emergency patients are walk-ins and are not appointable.</p>
+<p><b>Composition:</b> each appointable patient owns an <code>AppointmentBook</code>, which owns its <code>Appointment</code> objects (a patient has one or more appointments); <code>ClinicDatabase</code> owns every patient through a <code>vector&lt;PatientRecord*&gt;</code> and deletes them. <b>Polymorphism:</b> <code>WaitingQueue::join(const PatientRecord&amp;)</code> picks a lane by calling the virtual <code>getPriority()</code>; the reports, tables and file writer also work through base-class pointers; in the GUI every tab is refreshed through the abstract <code>ClinicPanel::refresh()</code>, and every undo action through <code>UndoAction::undo()</code>. See Figures 1&ndash;4.</p>
+
+<h2>4. Data structures used</h2>
+<table>
+<tr><th style="width:24%">Structure</th><th style="width:38%">Where it is used</th><th>Purpose</th></tr>
+<tr><td><code>std::vector</code></td><td><code>ClinicDatabase</code>; the table list in <code>ClinicManager</code>; each patient's appointments</td><td>Registered patients and appointment lists</td></tr>
+<tr><td><code>std::queue</code></td><td><code>WaitingQueue</code> (an emergency lane and a regular lane)</td><td>Patients waiting for consultation, first in first out</td></tr>
+<tr><td><code>std::stack</code></td><td><code>UndoManager</code> (holds <code>unique_ptr&lt;UndoAction&gt;</code>)</td><td>Undo last administrative operation, last in first out</td></tr>
+<tr><td>Fixed-size array</td><td><code>RecentCache</code>: <code>PatientRecord* entries[10]</code></td><td>Cache of the 10 most recently used patients</td></tr>
+</table>
+
+<h2>5. Searching algorithms used</h2>
+<p>All searches are written by hand in <code>SearchEngine</code> and report how many comparisons they made. <b>Linear search</b> by patient ID works on any list, so it is used when the data is unsorted. <b>Binary search</b> by ID or exact name needs a sorted list; <code>ClinicManager</code> remembers how the list is ordered and any change (add, edit, delete, load) marks it &ldquo;unsorted&rdquo;, so binary search refuses to run on stale data. A <b>recursive search</b> finds every patient whose name contains a keyword. In &ldquo;Automatic&rdquo; mode an ID search tries the recent-patients cache first, then binary search if the list is sorted by ID, otherwise linear search.</p>
+
+<h2>6. Sorting algorithms used</h2>
+<p><b>Insertion sort</b> and <b>merge sort</b> are implemented in <code>Sorter</code> (no library sort is used). Patients can be sorted by name, ID or age; the user chooses the algorithm and field in two combo boxes, and the number of comparisons is displayed afterwards. Sorting reorders only the list shown in the tables, never the database that owns the patients.</p>
+
+<h2>7. Recursive algorithm used</h2>
+<p><code>recursiveFind</code> in <code>SearchEngine</code> calls itself with the next index. Base case 1: the index has reached the end of the list (return &minus;1). Base case 2: the current patient's name contains the keyword (return the index). Recursive case: try the next patient. Merge sort is also recursive: it splits the list in half until one item remains, then merges the halves. The depth of the name search equals the list length, which is acceptable for a clinic's patient list.</p>
+
+<h2>8. GUI design</h2>
+<p>The main window (<code>QMainWindow</code>) has a menu bar (File, Edit, Help), six tabs &mdash; Dashboard, Patient Records, Appointments, Waiting Queue, Search &amp; Sort, Reports &mdash; and a status bar. Every tab derives from the abstract <code>ClinicPanel</code>. A panel never owns clinic data: it sends requests to the single <code>ClinicManager</code> and emits <code>dataChanged()</code>, and <code>MainWindow</code> then refreshes all tabs, so panels do not depend on each other. <b>Layouts:</b> <code>QVBoxLayout</code> and <code>QHBoxLayout</code> arrange tables beside forms and resize with the window, <code>QFormLayout</code> aligns labels with fields, and a <code>QStackedWidget</code> shows only the extra fields that suit the chosen patient type. <b>Events:</b> button clicks, menu actions, table selection, combo-box changes, text changes (live search), the Enter key and three <code>QTimer</code>s. <b>Advanced features:</b> rows coloured by category and appointment status, dynamic form fields, file dialogs (load, save, export), timers (dashboard refresh every 5 s, appointment reminders every 15 s, waiting-time alert every 1 s), validation dialogs, shortcuts (Ctrl+S, Ctrl+F, Ctrl+Q, Ctrl+N, Ctrl+O, Ctrl+Z) and tooltips.</p>
+
+<h2>9. Exception handling approach</h2>
+<p>A custom hierarchy derives from <code>std::runtime_error</code>: <code>ClinicException</code> is the base, with <code>InvalidDataException</code> (bad name, age, contact, date, time or search input), <code>DuplicateIdException</code> and <code>FileException</code>. <code>Validator</code> throws these; <code>ClinicDatabase::addPatient</code> checks everything before changing anything, so a failed operation leaves the data untouched. <code>FileHandler</code> reads a file into a temporary database and replaces the real one only if the whole file is valid; errors include the line number. The GUI catches <code>ClinicException</code> and shows <code>what()</code> in a dialog instead of crashing. Where memory must be released before an error continues upward, <code>catch (...)</code> deletes the object and rethrows; the timer handlers catch exceptions so one bad record cannot stop the program.</p>
+
+<h2>10. Algorithms chosen and reasons</h2>
+<table>
+<tr><th style="width:24%">Choice</th><th>Reason</th></tr>
+<tr><td>Insertion sort</td><td>Best for small or nearly sorted lists such as a clinic list with one new patient: 499 comparisons for 500 already-sorted patients.</td></tr>
+<tr><td>Merge sort</td><td>Always about n&nbsp;log&nbsp;n, so it suits large or unpredictable lists: 2,216 comparisons for 500 reverse-sorted patients, against 124,750 for insertion sort.</td></tr>
+<tr><td>Linear search</td><td>Works on unsorted data with no preparation.</td></tr>
+<tr><td>Binary search</td><td>Halves the search space each step; on the 5-patient test list it needed 2 comparisons against 4 for linear search. It requires sorted data, which the program checks.</td></tr>
+<tr><td>Recursive search</td><td>Expresses &ldquo;check this patient, then search the rest&rdquo; directly and finds every partial name match.</td></tr>
+<tr><td>Queue (two lanes)</td><td>First in, first out is fair; the emergency lane lets urgent patients go first.</td></tr>
+<tr><td>Stack</td><td>Undo must reverse the most recent operation first: last in, first out.</td></tr>
+</table>
+
+<h2>11. Challenges encountered</h2>
+<ol>
+<li>VS Code compiled with <code>gcc</code> instead of <code>g++</code>, giving &ldquo;undefined reference to <code>std::cout</code>&rdquo; linker errors.</li>
+<li>Memory ownership of polymorphic pointers: leaks and dangling pointers were possible (cache, queue, undo, table list).</li>
+<li>Several structures had to stay consistent: deleting or loading patients while the cache, queue and undo stack still referred to them.</li>
+<li>Binary search returned wrong answers if the list was no longer sorted.</li>
+<li>Undo first restored only name, age and contact, not type-specific fields or appointments.</li>
+<li>A bad data file could leave the program half-loaded.</li>
+<li>Qt: a variable named <code>slots</code> clashed with a Qt macro, and signal/slot classes need the <code>moc</code> code generator.</li>
+<li>Time-based features (reminders) were hard to test because they depend on the clock.</li>
+</ol>
+
+<h2>12. How the challenges were resolved</h2>
+<ol>
+<li>The build task was changed to <code>g++</code> and later replaced by CMake; reading the <em>first</em> linker error showed which definition was missing.</li>
+<li>One-owner rule: <code>ClinicDatabase</code> owns patients, the queue stores IDs, the cache and table list are non-owning, a deleted patient belongs to its undo action; virtual destructors and <code>unique_ptr</code> for actions.</li>
+<li><code>ClinicManager</code> performs each operation as one step (remove from cache and queue before deleting; reset cache, queue and undo history after loading).</li>
+<li>The list order is recorded and any change resets it to &ldquo;unsorted&rdquo;; binary search refuses to run otherwise.</li>
+<li>Undo stores a full <code>PatientData</code> snapshot and <code>PatientFactory::apply</code> restores it; a deleted patient is kept alive with its appointments; a cancelled appointment is reopened.</li>
+<li>Loading goes through a temporary database with line-numbered errors; the real data is replaced only after the whole file passes.</li>
+<li>The variable was renamed, and CMake&rsquo;s <code>AUTOMOC</code> runs <code>moc</code> automatically.</li>
+<li><code>ReminderService</code> takes the current time as a parameter and was tested with fixed times (a separate test program).</li>
+</ol>
+
+</div>

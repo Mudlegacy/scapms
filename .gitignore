@@ -1,0 +1,20 @@
+# Build output
+build/
+*.exe
+*.o
+*.obj
+*.a
+
+# Files created by the test programs
+bad*.csv
+clinic_data.csv
+clinic_manager_test.csv
+gui_test.csv
+
+# Generated submission files
+submission/COS202_SCAPMS_Submission.html
+submission/*.pdf
+
+# Editor and OS files
+.vscode/c_cpp_properties.json
+Thumbs.db

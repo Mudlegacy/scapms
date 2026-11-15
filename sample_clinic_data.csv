@@ -1,0 +1,32 @@
+SCAPMS,1
+P,General,1,Aisha Bello,29,08031234567,Persistent headache
+P,General,2,Chinedu Okafor,38,08022223333,Lower back pain
+P,Emergency,3,Zainab Musa,45,08098765432,4,Chest pain
+P,FollowUp,4,Ibrahim Sani,60,08055555555,Hypertension,2026-10-01
+P,General,5,Maryam Abdullahi,22,08011112222,Skin rash
+P,General,6,Bala Danjuma,52,08066667777,Persistent cough
+P,FollowUp,7,Funke Adeyemi,34,08077778888,Type 2 diabetes review,2026-10-15
+P,Emergency,8,Emeka Eze,27,08044445555,5,Severe allergic reaction
+P,General,9,Hauwa Garba,41,08033334444,Fever and chills
+P,FollowUp,10,Tunde Balogun,55,08099990000,Asthma,2026-09-28
+P,General,11,Ngozi Nwosu,19,08088889999,Sore throat
+P,General,12,Sani Lawal,67,08012340000,Joint pain
+A,101,1,2026-10-06,09:00,Initial consultation,Completed
+A,102,1,2026-10-20,09:30,Follow-up check,Completed
+A,103,1,2026-11-03,10:00,Medication review,Completed
+A,104,1,2026-11-17,10:30,Review of results,Pending
+A,105,4,2026-10-01,11:00,Blood pressure check,Completed
+A,106,4,2026-10-29,11:00,Blood pressure check,Completed
+A,107,4,2026-11-12,15:00,Medication adjustment,Pending
+A,108,5,2026-11-02,13:00,Rash assessment,Completed
+A,109,5,2026-11-12,09:30,Skin treatment follow-up,Cancelled
+A,110,2,2026-11-10,14:00,Physiotherapy referral,Pending
+A,111,6,2026-11-12,11:30,Chest examination,Completed
+A,112,7,2026-11-12,16:00,Diabetes review,Pending
+A,113,7,2026-10-15,09:00,HbA1c review,Completed
+A,114,7,2026-10-29,09:00,Diet consultation,Completed
+A,115,9,2026-11-18,12:00,Fever follow-up,Pending
+A,116,10,2026-10-28,10:30,Asthma review,Completed
+A,117,12,2026-11-19,08:30,Joint pain assessment,Pending
+A,118,11,2026-11-16,15:30,Throat examination,Cancelled
+A,119,2,2026-11-05,14:00,Back pain assessment,Completed
